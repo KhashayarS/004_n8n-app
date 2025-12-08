@@ -47,7 +47,7 @@ async def get_book(book_id: str, db: db_dependency):
         book = db.query(Book).filter(Book.id==book_id).first()
         return book
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Failed to retrieve the book with id {book_id}: {e}')
+        raise HTTPException from e
 
 
 
@@ -57,7 +57,7 @@ async def get_all_books(db: db_dependency):
         all_books = db.query(Book).all()
         return all_books
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Failed to retrieve books data: {e}')
+        raise HTTPException from e
     
 
 
@@ -77,7 +77,7 @@ async def add_book(add_book_request: BookRequest, db: db_dependency):
     }
 
     try:
-        response = requests.post(WEBHOOK_URL, headers=headers, json=payload)
+        response = requests.post(WEBHOOK_URL, headers=headers, json=payload, timeout=60000)
         response_content = json.loads(response.content)
         
         if 'output' in response_content:
@@ -87,7 +87,7 @@ async def add_book(add_book_request: BookRequest, db: db_dependency):
         category_by_ai = response_content['category_by_ai']
 
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f'Error while connecting to N8N: {e}')
+        raise HTTPException from e
     
     new_book = Book(
         title=title,
@@ -101,7 +101,7 @@ async def add_book(add_book_request: BookRequest, db: db_dependency):
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f'Failed to store new data in database: {e}')
+        raise HTTPException from e
     
 
 @app.get("/test-type/{test_value}")

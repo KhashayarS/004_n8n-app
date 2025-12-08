@@ -1,0 +1,9 @@
+fastapi
+sqlalchemy
+uvicorn[standard]
+requests
+httpx
+black
+pylint
+pytest
+pytest-cov
