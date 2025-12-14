@@ -4,10 +4,10 @@ install:
 		pip install -r requirements.txt
 format:
 	#format code
-	black *.py
+	black *.py routers/*.py
 lint:
 	#pylint or #flake8
-	pylint --disable=R,C *.py
+	pylint --disable=R,C *.py routers/*.py
 test:
 	#test
 deply:
