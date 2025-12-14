@@ -12,4 +12,7 @@ test:
 	#test
 deply:
 	#deploy
+build:
+	#build container
+	#docker build -t deploy-books-app .
 all: install lint test deploy
