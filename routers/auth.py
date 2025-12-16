@@ -60,7 +60,7 @@ def authenticate_user(username: str, password: str, db):
 
 def create_access_token(username: str, user_id: int, role: str, expired_delta: timedelta):
     encode = {'sub': username, 'id': user_id, 'role': role}
-    expires = datetime.now(tz=timezone.utc) + timedelta(minutes=30)
+    expires = datetime.now(tz=timezone.utc) + timedelta(minutes=expired_delta)
     encode.update({'exp': expires})
     return jwt.encode(encode, key=SECRET_KEY, algorithm=ALGORITHM)
 
@@ -75,8 +75,8 @@ async def get_current_user(token: Annotated[str, Depends(oath2_bearer)]):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.")
 
         return {"username": username, "id": user_id, "user_role": user_role}
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.")
+    except JWTError as exc:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user.") from exc
     
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
