@@ -2,7 +2,7 @@ import requests
 import json
 from typing import Annotated
 from pydantic import BaseModel, Field
-from fastapi import APIRouter, status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends, Path
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Book
@@ -38,8 +38,10 @@ class BookRequest(BaseModel):
 
 
 @router.get("/all", status_code=status.HTTP_200_OK)
-async def get_all_books(db: db_dependency, user_dict: user_dependency):
-    owner_id = user_dict.get("id")
+async def get_all_books(db: db_dependency, user: user_dependency):
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Authentication Failed')
+    owner_id = user.get("id")
     try:
         all_books = db.query(Book).filter(Book.owner_id == owner_id).all()
         return all_books
@@ -48,8 +50,12 @@ async def get_all_books(db: db_dependency, user_dict: user_dependency):
 
 
 @router.get("/{book_id}", status_code=status.HTTP_200_OK)
-async def get_book(book_id: int, db: db_dependency, user_dict: user_dependency):
-    owner_id = user_dict.get("id")
+async def get_book(
+    db: db_dependency, user: user_dependency, book_id: int = Path(gt=0)
+):
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Authentication Failed')
+    owner_id = user.get("id")
     book = (
         db.query(Book)
         .filter(Book.id == book_id)
@@ -64,12 +70,14 @@ async def get_book(book_id: int, db: db_dependency, user_dict: user_dependency):
 
 @router.post("/add-book", status_code=status.HTTP_201_CREATED)
 async def add_book(
-    add_book_request: BookRequest, db: db_dependency, user_dict: user_dependency
+    add_book_request: BookRequest, db: db_dependency, user: user_dependency
 ):
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Authentication Failed')
     title = add_book_request.title
     author = add_book_request.author
 
-    owner_id = user_dict.get("id")
+    owner_id = user.get("id")
     if not owner_id:
         raise HTTPException(status_code=401, detail="Authentication Failed.")
 
@@ -112,8 +120,12 @@ async def add_book(
 
 
 @router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_book(book_id: int, db: db_dependency, user_dict: user_dependency):
-    owner_id = user_dict.get("id")
+async def delete_book(
+    db: db_dependency, user: user_dependency, book_id: int = Path(gt=0)
+):
+    if user is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail='Authentication Failed')
+    owner_id = user.get("id")
     book = (
         db.query(Book)
         .filter(Book.id == book_id)

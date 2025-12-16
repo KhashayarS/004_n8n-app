@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, status, HTTPException, Depends
+from fastapi import APIRouter, status, HTTPException, Depends, Path
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Book
@@ -23,10 +23,9 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
 @router.get("/all", status_code=status.HTTP_200_OK)
-async def get_all_books(db: db_dependency, user_dict: user_dependency):
-    role = user_dict.get("role")
-    if role != "admin":
-        raise HTTPException(status_code=401, detail="Admin authentication failed.")
+async def get_all_books(db: db_dependency, user: user_dependency):
+    if user is None or user.get('user_role') != 'admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication Failed")
     try:
         all_books = db.query(Book).all()
         return all_books
@@ -35,26 +34,24 @@ async def get_all_books(db: db_dependency, user_dict: user_dependency):
 
 
 @router.get("/{book_id}", status_code=status.HTTP_200_OK)
-async def get_book(book_id: int, db: db_dependency, user_dict: user_dependency):
-    role = user_dict.get("role")
-    if role != "admin":
-        raise HTTPException(status_code=401, detail="Admin authentication failed.")
+async def get_book( db: db_dependency, user: user_dependency, book_id: int = Path(gt=0)):
+    if user is None or user.get('user_role') != 'admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication Failed")
 
     book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
+    if book is None:
         raise HTTPException(status_code=404, detail="Book not found.")
 
     return book
 
 
 @router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_book(book_id: int, db: db_dependency, user_dict: user_dependency):
-    role = user_dict.get("role")
-    if role != "admin":
-        raise HTTPException(status_code=401, detail="Admin authentication failed.")
+async def delete_book(db: db_dependency, user: user_dependency, book_id: int = Path(gt=0)):
+    if user is None or user.get('user_role') != 'admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication Failed")
 
     book = db.query(Book).filter(Book.id == book_id).first()
-    if not book:
+    if book is None:
         raise HTTPException(status_code=404, detail="Book not found.")
 
     try:

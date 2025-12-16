@@ -16,8 +16,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), nullable=False, unique=True)
     hashed_password = Column(String)
-    role = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
+    role = Column(String(100), nullable=True)
 
 
 class Book(Base):
@@ -28,7 +28,7 @@ class Book(Base):
     author = Column(String(100), nullable=False)
     summary_by_ai = Column(String(300), nullable=True)
     category_by_ai = Column(String(300), nullable=True)
-    owner_id = Column(ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id"))
 
     __table_args__ = (
         CheckConstraint(func.length(author) >= 2, name="ck_author_min_length"),
